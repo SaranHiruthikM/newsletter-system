@@ -1,15 +1,33 @@
 package main
 
 import (
-	"fmt"
-
+	"github.com/SaranHiruthikM/newsletter-system/internal/api"
+	"github.com/SaranHiruthikM/newsletter-system/internal/api/handlers"
 	"github.com/SaranHiruthikM/newsletter-system/internal/config"
+	"github.com/SaranHiruthikM/newsletter-system/internal/database"
+	"github.com/SaranHiruthikM/newsletter-system/internal/repository/postgres"
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
 	cfg := config.Load()
 
-	fmt.Println("APP PORT:", cfg.App.Port)
-	fmt.Println("RedisHOST", cfg.Redis.Host)
-	fmt.Println("EmailProvider:", cfg.Email.Provider)
+	db, err := database.Connect(cfg.DB)
+	if err != nil {
+		panic("DB dbection error")
+	}
+
+	subRepo := postgres.NewSubscriberRepository(db)
+	newsRepo := postgres.NewNewsletterRepository(db)
+
+	healthHandler := handlers.NewHealthHandler(db)
+	subHandler := handlers.NewSubscriberHandler(subRepo)
+	confirmHandler := handlers.NewConfirmHandler(subRepo)
+	newsHandler := handlers.NewNewsletterHandler(subRepo, newsRepo)
+
+	app := fiber.New()
+	api.SetupRoutes(app, healthHandler, subHandler, confirmHandler, newsHandler)
+
+	app.Listen(":" + cfg.App.Port)
+
 }
