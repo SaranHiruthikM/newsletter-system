@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/SaranHiruthikM/newsletter-system/internal/domain"
+	"github.com/SaranHiruthikM/newsletter-system/internal/queue"
 	"github.com/SaranHiruthikM/newsletter-system/internal/repository"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -12,15 +13,17 @@ import (
 
 type SubscribeHandler struct {
 	repo repository.SubscriberRepository
+	pub  *queue.Publisher
 }
 
 type SubscribeRequest struct {
 	Email string `json:"email"`
 }
 
-func NewSubscriberHandler(repo repository.SubscriberRepository) *SubscribeHandler {
+func NewSubscriberHandler(repo repository.SubscriberRepository, publisher *queue.Publisher) *SubscribeHandler {
 	return &SubscribeHandler{
 		repo: repo,
+		pub:  publisher,
 	}
 }
 
@@ -62,6 +65,11 @@ func (h *SubscribeHandler) Handle(c *fiber.Ctx) error {
 	}
 
 	log.Printf("confirmation token for %s: %s", req.Email, token)
+
+	h.pub.PublishConfirmation(queue.ConfirmationPayload{
+		Email: subscriber.Email,
+		Token: subscriber.Token,
+	})
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "subscription successful, please check your mail"})
 }

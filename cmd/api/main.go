@@ -5,6 +5,7 @@ import (
 	"github.com/SaranHiruthikM/newsletter-system/internal/api/handlers"
 	"github.com/SaranHiruthikM/newsletter-system/internal/config"
 	"github.com/SaranHiruthikM/newsletter-system/internal/database"
+	"github.com/SaranHiruthikM/newsletter-system/internal/queue"
 	"github.com/SaranHiruthikM/newsletter-system/internal/redis"
 	"github.com/SaranHiruthikM/newsletter-system/internal/repository/postgres"
 	"github.com/gofiber/fiber/v2"
@@ -21,10 +22,16 @@ func main() {
 	subRepo := postgres.NewSubscriberRepository(db)
 	newsRepo := postgres.NewNewsletterRepository(db)
 
+	_, channel, err := queue.Connect(cfg.RabbitMQ.URL)
+	if err != nil {
+		panic("failed to connect to RabbitMQ: " + err.Error())
+	}
+	publisher := queue.NewPublisher(channel)
+
 	healthHandler := handlers.NewHealthHandler(db)
-	subHandler := handlers.NewSubscriberHandler(subRepo)
+	subHandler := handlers.NewSubscriberHandler(subRepo, publisher)
 	confirmHandler := handlers.NewConfirmHandler(subRepo)
-	newsHandler := handlers.NewNewsletterHandler(subRepo, newsRepo)
+	newsHandler := handlers.NewNewsletterHandler(subRepo, newsRepo, publisher)
 
 	redisClient := redis.Connect(cfg.Redis)
 	adminKey := cfg.App.AdminKey

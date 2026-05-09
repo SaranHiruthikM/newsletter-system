@@ -1,18 +1,19 @@
 package handlers
 
 import (
-	"log"
 	"time"
 
 	"github.com/SaranHiruthikM/newsletter-system/internal/domain"
+	"github.com/SaranHiruthikM/newsletter-system/internal/queue"
 	"github.com/SaranHiruthikM/newsletter-system/internal/repository"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
 type NewsletterHandler struct {
-	subRepo  repository.SubscriberRepository
-	newsRepo repository.NewsletterRepository
+	subRepo   repository.SubscriberRepository
+	newsRepo  repository.NewsletterRepository
+	publisher *queue.Publisher
 }
 
 type NewsletterSendRequest struct {
@@ -20,8 +21,8 @@ type NewsletterSendRequest struct {
 	Body    string `json:"body"`
 }
 
-func NewNewsletterHandler(subRepo repository.SubscriberRepository, newsRepo repository.NewsletterRepository) *NewsletterHandler {
-	return &NewsletterHandler{subRepo: subRepo, newsRepo: newsRepo}
+func NewNewsletterHandler(subRepo repository.SubscriberRepository, newsRepo repository.NewsletterRepository, publisher *queue.Publisher) *NewsletterHandler {
+	return &NewsletterHandler{subRepo: subRepo, newsRepo: newsRepo, publisher: publisher}
 }
 
 func (h *NewsletterHandler) Handle(c *fiber.Ctx) error {
@@ -62,8 +63,13 @@ func (h *NewsletterHandler) Handle(c *fiber.Ctx) error {
 		)
 	}
 
-	for _, subs := range subscribers {
-		log.Printf("would send to: %s", subs.Email)
+	for _, sub := range subscribers {
+		h.publisher.PublishNewsletter(queue.NewsletterPayload{
+			NewsletterID: newsletter.ID,
+			Email:        sub.Email,
+			Subject:      req.Subject,
+			Body:         req.Body,
+		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "newsletter dispatch started", "total": len(subscribers)})
