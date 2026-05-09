@@ -21,9 +21,10 @@ type Config struct {
 }
 
 type AppConfig struct {
-	Port     string
-	Env      string
-	AdminKey string
+	Port              string
+	Env               string
+	AdminKey          string
+	WorkerMetricsPort string
 }
 
 type DBConfig struct {
@@ -72,9 +73,10 @@ func Load() *Config {
 
 	cfg := &Config{
 		App: AppConfig{
-			Port:     getEnvOptional("APP_PORT", "3001"),
-			Env:      getEnvOptional("APP_ENV", "development"),
-			AdminKey: getEnvRequired("ADMIN_API_KEY"),
+			Port:              getEnvOptional("APP_PORT", "3001"),
+			Env:               getEnvOptional("APP_ENV", "development"),
+			AdminKey:          getEnvRequired("ADMIN_API_KEY"),
+			WorkerMetricsPort: getEnvOptional("WORKER_METRICS_PORT", "3002"),
 		},
 		DB: DBConfig{
 			Host:     getEnvRequired("DB_HOST"),
@@ -104,7 +106,7 @@ func Load() *Config {
 			Provider:      getEnvOptional("EMAIL_PROVIDER", "resend"),
 			FromEmail:     getEnvOptional("EMAIL_FROM_EMAIL", ""),
 			FromName:      getEnvOptional("EMAIL_FROM_NAME", ""),
-			ResendAPIKey:  getEnvOptional("RESEND_API_KEY", ""),
+			ResendAPIKey:  getEnvOptional("RESEND_API_KEY", "re_A83y2oHW_AJXz4H1Dmgka7JzW1JTdFLLk"),
 			ResendBaseURL: getEnvOptional("RESEND_BASE_URL", ""),
 			ResendTimeout: getEnvOptionalDuration("RESEND_TIMEOUT", 10*time.Second),
 			SESRegion:     getEnvOptional("AWS_SES_REGION", "us-east-1"),

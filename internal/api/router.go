@@ -4,14 +4,16 @@ import (
 	"github.com/SaranHiruthikM/newsletter-system/internal/api/handlers"
 	"github.com/SaranHiruthikM/newsletter-system/internal/api/middleware"
 	"github.com/SaranHiruthikM/newsletter-system/internal/config"
+	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 )
 
 func SetupRoutes(app *fiber.App, healthHandler *handlers.HealthHandler, subHandler *handlers.SubscribeHandler, confirmHandler *handlers.ConfirmHandler, newsHandler *handlers.NewsletterHandler, redisClient *redis.Client, cfg *config.Config, adminKey string) {
 	api := app.Group("/api/v1")
 	api.Get("/health", healthHandler.Check)
-
+	api.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 	if cfg.RateLimit.Enabled {
 		public := api.Group("", middleware.RateLimiter(redisClient, cfg.RateLimit.Limit, cfg.RateLimit.Window))
 		public.Post("/subscribe", subHandler.Handle)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/SaranHiruthikM/newsletter-system/internal/config"
@@ -25,6 +26,7 @@ type resendRequest struct {
 }
 
 func NewResendProvider(cfg config.EmailConfig) *ResendProvider {
+	log.Println("RESEND_API_KEY", cfg.ResendAPIKey)
 	return &ResendProvider{
 		apiKey:    cfg.ResendAPIKey,
 		fromEmail: cfg.FromEmail,
@@ -32,6 +34,7 @@ func NewResendProvider(cfg config.EmailConfig) *ResendProvider {
 		baseURL:   cfg.ResendBaseURL,
 		client:    &http.Client{Timeout: cfg.ResendTimeout},
 	}
+
 }
 
 func (r *ResendProvider) Send(to, subject, body string) error {
