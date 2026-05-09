@@ -21,8 +21,9 @@ type Config struct {
 }
 
 type AppConfig struct {
-	Port string
-	Env  string
+	Port     string
+	Env      string
+	AdminKey string
 }
 
 type DBConfig struct {
@@ -71,8 +72,9 @@ func Load() *Config {
 
 	cfg := &Config{
 		App: AppConfig{
-			Port: getEnvOptional("APP_PORT", "3001"),
-			Env:  getEnvOptional("APP_ENV", "development"),
+			Port:     getEnvOptional("APP_PORT", "3001"),
+			Env:      getEnvOptional("APP_ENV", "development"),
+			AdminKey: getEnvRequired("ADMIN_API_KEY"),
 		},
 		DB: DBConfig{
 			Host:     getEnvRequired("DB_HOST"),

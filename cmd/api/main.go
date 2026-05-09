@@ -5,6 +5,7 @@ import (
 	"github.com/SaranHiruthikM/newsletter-system/internal/api/handlers"
 	"github.com/SaranHiruthikM/newsletter-system/internal/config"
 	"github.com/SaranHiruthikM/newsletter-system/internal/database"
+	"github.com/SaranHiruthikM/newsletter-system/internal/redis"
 	"github.com/SaranHiruthikM/newsletter-system/internal/repository/postgres"
 	"github.com/gofiber/fiber/v2"
 )
@@ -25,8 +26,11 @@ func main() {
 	confirmHandler := handlers.NewConfirmHandler(subRepo)
 	newsHandler := handlers.NewNewsletterHandler(subRepo, newsRepo)
 
+	redisClient := redis.Connect(cfg.Redis)
+	adminKey := cfg.App.AdminKey
+
 	app := fiber.New()
-	api.SetupRoutes(app, healthHandler, subHandler, confirmHandler, newsHandler)
+	api.SetupRoutes(app, healthHandler, subHandler, confirmHandler, newsHandler, redisClient, cfg, adminKey)
 
 	app.Listen(":" + cfg.App.Port)
 
