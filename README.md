@@ -6,6 +6,38 @@ This project helps you manage email subscriptions and send out newsletters to yo
 
 Ever needed a reliable way to connect with your subscribers? This system provides a robust and scalable solution for managing email newsletters. Built with performance in mind, it handles everything from user subscription and email confirmation to the asynchronous dispatch of bulk newsletters. With features like rate limiting and idempotency, it ensures a smooth and reliable experience for both you and your subscribers.
 
+## Architecture
+```mermaid
+flowchart TD
+    Client(["Client / Browser"])
+    API["Fiber API\ncmd/api · :8080"]
+    MW["Middleware\nRate limit · API key · Idempotency"]
+    Repos["Repository Layer\nPostgres implementations"]
+    PG[("PostgreSQL\nsubscribers\nnewsletter_sends")]
+    Redis[("Redis\nrate-limit counters\nidempotency cache")]
+    MQ[["RabbitMQ\nconfirmation.queue\nnewsletter.queue"]]
+    Worker["Worker Process\ncmd/worker"]
+    Email["Resend API\nemail provider"]
+    Prom["Prometheus\n:9090"]
+    Grafana["Grafana\n:3000"]
+    APIMet["/api/v1/metrics"]
+    WorkMet[":3002/metrics"]
+
+    Client --> API
+    API --> MW
+    MW --> Repos
+    MW --> Redis
+    Repos --> PG
+    API --> MQ
+    MQ --> Worker
+    Worker --> Email
+    Worker --> PG
+    API --> APIMet
+    Worker --> WorkMet
+    APIMet --> Prom
+    WorkMet --> Prom
+    Prom --> Grafana
+```
 ## Installation
 
 To get this project up and running locally, follow these steps:
